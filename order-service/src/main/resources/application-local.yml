@@ -1,0 +1,217 @@
+# Local Development Configuration
+spring:
+  profiles: local
+  
+  # MongoDB Configuration for Local
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/sattvabite_orderdb}
+      host: ${MONGODB_HOST:localhost}
+      port: ${MONGODB_PORT:27017}
+      database: ${MONGODB_DATABASE:sattvabite_orderdb}
+      auto-index-creation: true
+      auto-create-indexes: true
+      repositories:
+        enabled: true
+  
+  # Disable JPA if not used
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  
+  # DevTools configuration
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+  
+  # HTTP Client Configuration
+  http:
+    log-request-details: true
+  
+  # Web Configuration
+  web:
+    resources:
+      cache:
+        period: 0
+  
+  # Cloud Configuration
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+    discovery:
+      client:
+        simple:
+          instances:
+            sattvabite-food-service:
+              - uri: http://localhost:9092
+                metadata:
+                  zone: primary
+            sattvabite-restaurant-service:
+              - uri: http://localhost:9093
+                metadata:
+                  zone: primary
+
+# Eureka Configuration for Local Development
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+    metadata-map:
+      zone: local
+      version: 1.0.0
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVICE_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+    registry-fetch-interval-seconds: 5
+
+# Local Development Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.sattvabite: DEBUG
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    feign: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    org.springframework.cloud.sleuth: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.web.client: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/order-service.log
+    max-history: 7
+    max-size: 10MB
+
+# Local Development Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+      cors:
+        allowed-origins: 'http://localhost:4200,http://localhost:8080'
+        allowed-methods: '*'
+        allowed-headers: '*'
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    metrics:
+      enabled: true
+  health:
+    db:
+      enabled: true
+    mongo:
+      enabled: true
+  metrics:
+    enable:
+      http:
+        server:
+          requests: true
+    export:
+      prometheus:
+        enabled: true
+        step: 30s
+    distribution:
+      percentiles:
+        http:
+          server:
+            requests: 0.5,0.75,0.9,0.95,0.99
+
+# Resilience4j Local Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      foodService:
+        registerHealthIndicator: true
+        slidingWindowSize: 20
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 2
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 2s
+      restaurantService:
+        baseConfig: foodService
+  retry:
+    instances:
+      foodService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2.0
+      restaurantService:
+        baseConfig: foodService
+  ratelimiter:
+    instances:
+      foodService:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 100ms
+      restaurantService:
+        baseConfig: foodService
+
+# Feign Client Local Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 3000
+        readTimeout: 10000
+        loggerLevel: full
+  compression:
+    request:
+      enabled: true
+      mime-types: text/xml,application/xml,application/json
+      min-request-size: 2048
+    response:
+      enabled: true
+
+# API Documentation (Swagger/OpenAPI)
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+  show-actuator: true
+  show-login-endpoint: true
+  cache:
+    disabled: true
+
+# Local Development Properties
+server:
+  port: 9094
+  servlet:
+    context-path: /api/orders
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+    min-response-size: 1024
+
+debug: true
+
+# Local Development Environment Variables
+ENV: local
+      port: 27017
+      database: sattvabite_orderdb
+      repositories:
+        enabled: true

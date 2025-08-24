@@ -1,0 +1,129 @@
+# Development specific configuration
+spring:
+  profiles: dev
+  
+  # MongoDB Configuration
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb+srv://admin:codedecode@atlas-cluster.mqdj7js.mongodb.net/sattvabite_orderdb?retryWrites=true&w=majority}
+      host: ${MONGODB_HOST:atlas-cluster.mqdj7js.mongodb.net}
+      port: ${MONGODB_PORT:27017}
+      database: ${MONGODB_DATABASE:sattvabite_orderdb}
+      auto-index-creation: true
+      repositories:
+        enabled: true
+      
+  # Eureka Client Configuration for Dev
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+    discovery:
+      client:
+        simple:
+          instances:
+            sattvabite-food-service:
+              - uri: http://localhost:9092
+                metadata:
+                  zone: primary
+            sattvabite-restaurant-service:
+              - uri: http://localhost:9093
+                metadata:
+                  zone: primary
+
+# Eureka Configuration for Development
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+    metadata-map:
+      zone: ${ZONE:primary}
+      version: 1.0.0
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVICE_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+    registry-fetch-interval-seconds: 5
+
+# Logging Configuration for Development
+logging:
+  level:
+    root: INFO
+    com.sattvabite: DEBUG
+    org.springframework: INFO
+    org.hibernate: INFO
+    feign: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    org.springframework.cloud.sleuth: DEBUG
+    org.springframework.web: DEBUG
+
+# Development specific overrides
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 30s
+
+# Resilience4j Dev Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      foodService:
+        registerHealthIndicator: true
+        slidingWindowSize: 50
+        permittedNumberOfCallsInHalfOpenState: 5
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 2
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+      restaurantService:
+        baseConfig: foodService
+  retry:
+    instances:
+      foodService:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+      restaurantService:
+        baseConfig: foodService
+
+# Feign Client Dev Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: full
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
+
+# API Documentation (Swagger/OpenAPI)
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+  show-actuator: true
+
+# Development specific properties
+debug: true

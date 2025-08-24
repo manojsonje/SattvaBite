@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: food-catalogue-service
+  
+  # Distributed Tracing Configuration
+  sleuth:
+    sampler:
+      probability: 1.0  # Sample 100% of requests for testing
+    propagation:
+      type: B3
+    web:
+      client:
+        enabled: true
+    
+  # Zipkin Configuration
+  zipkin:
+    base-url: http://localhost:9411
+    sender:
+      type: web
+    service:
+      name: food-catalogue-service
+    
+  # Database Configuration
+  datasource:
+    url: jdbc:mysql://localhost:3306/fooddb?useSSL=false&allowPublicKeyRetrieval=true
+    username: user
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # Logging Configuration
+  logging:
+    level:
+      root: INFO
+      org.springframework.web: INFO
+      com.sattvabite: DEBUG
+      brave: DEBUG
+      org.hibernate.SQL: DEBUG
+      org.hibernate.type: TRACE
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+# Enable JDBC tracing
+spring.sleuth.jdbc.enabled: true
+
+# Log correlation IDs
+logging.pattern.level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-},%X{requestId:-}]"

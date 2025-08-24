@@ -1,0 +1,99 @@
+spring:
+  application:
+    name: order-service
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: testdb
+
+server:
+  port: 0  # Use random port for tests
+
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 5000
+        logger-level: basic
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Disable Eureka client in tests
+eureka:
+  client:
+    enabled: false
+
+# Disable security for tests
+security:
+  oauth2:
+    resourceserver:
+      jwt:
+        issuer-uri: http://dummy-issuer-uri
+        jwk-set-uri: http://dummy-jwk-uri
+
+# Test configuration for WireMock
+wiremock:
+  server:
+    port: 0  # Use random port for WireMock
+
+# Disable scheduling in tests
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.task.TaskSchedulingAutoConfiguration
+
+# Disable JPA auto-configuration in tests
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+# Disable MongoDB auto-index creation in tests
+spring:
+  data:
+    mongodb:
+      auto-index-creation: false
+
+# Test configuration for Feign clients
+feign:
+  client:
+    config:
+      food-catalogue-service:
+        url: http://localhost:${wiremock.server.port}
+        connect-timeout: 5000
+        read-timeout: 5000
+        logger-level: full
+
+# Disable Ribbon in tests (using direct URLs instead)
+ribbon:
+  eureka:
+    enabled: false
+
+# Test configuration for Resilience4j
+resilience4j:
+  circuitbreaker:
+    instances:
+      foodCatalogueService:
+        register-health-indicator: true
+        sliding-window-size: 10
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-type: COUNT_BASED
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 10s
+        failure-rate-threshold: 50
+  retry:
+    instances:
+      foodCatalogueService:
+        max-attempts: 3
+        wait-duration: 1000
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
